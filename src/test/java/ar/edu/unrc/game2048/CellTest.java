@@ -48,4 +48,46 @@ public class CellTest {
         assertThrows(IllegalArgumentException.class, () -> cell1.mergeWith(cell2));
     }
 
+    @Test
+    public void testMergeWith2(){
+        Cell cell1 = new Cell(32);
+        Cell cell2 = new Cell(32);
+        Cell cell3 = new Cell(64);
+        assertEquals(cell1.mergeWith(cell2), cell3);
+    }
+
+    @Test 
+    public void testEquals(){
+        Cell cell1 = new Cell(32);
+        Cell cell2 = new Cell(32);
+        assertTrue(cell1.equals(cell2));
+    }
+
+    @Test 
+    public void testEquals2(){
+        Cell cell1 = new Cell(32);
+        Cell cell2 = new Cell(4);
+        assertFalse(cell1.equals(cell2));
+    }
+
+    @Test
+    public void testHashCode(){
+        Cell cell1 = new Cell(32);
+        Cell cell2 = new Cell(32);
+        assertEquals(cell1.hashCode(), cell2.hashCode());
+    }
+
+    @Test
+    public void testToString(){
+        Cell cell1 = new Cell(32);
+        assertEquals(cell1.toString(), "32");
+    }
+
+    @Test
+    public void testToString2(){
+        Cell cell1 = new Cell(0);
+        assertEquals(cell1.toString(), ".");
+    }
+
+
 }

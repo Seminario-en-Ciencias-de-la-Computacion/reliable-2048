@@ -122,4 +122,5 @@ public final class Cell {
     public String toString() {
         return value == 0 ? "." : String.valueOf(value);
     }
+
 }
