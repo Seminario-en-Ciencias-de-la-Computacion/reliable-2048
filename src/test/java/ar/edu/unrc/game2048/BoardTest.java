@@ -60,9 +60,9 @@ public class BoardTest {
     public void testMoveDown(){
         Board board1 = new Board();
         resetBoard(board1);
-        board1.setCell(3, 3, new Cell(2));
-        board1.setCell(2, 3, new Cell(2));
+        board1.setCell(0, 0, new Cell(2));
+        board1.setCell(1, 0, new Cell(2));
         board1.moveDown();
-        assertEquals(board1.getCell(3,3).getValue(), 4);
+        assertEquals(board1.getCell(3,0).getValue(), 4);
     }
 }

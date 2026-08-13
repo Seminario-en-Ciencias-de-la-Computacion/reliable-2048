@@ -326,8 +326,7 @@ public class Board {
             List<Cell> merged = new ArrayList<>();
             int i = 0;
             while (i < nonEmpty.size()) {
-                if (i + 1 < nonEmpty.size() &&
-                        nonEmpty.get(i).canMergeWith(nonEmpty.get(i + 1))) {
+                if (i + 1 < nonEmpty.size() && nonEmpty.get(i).canMergeWith(nonEmpty.get(i + 1))) {
                     Cell mergedCell = nonEmpty.get(i).mergeWith(nonEmpty.get(i + 1));
                     merged.add(mergedCell);
                     score += mergedCell.getValue();
