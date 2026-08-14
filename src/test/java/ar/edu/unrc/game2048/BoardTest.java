@@ -65,4 +65,77 @@ public class BoardTest {
         board1.moveDown();
         assertEquals(board1.getCell(3,0).getValue(), 4);
     }
+
+    @Test
+    public void testMoveDown2(){
+        Board board1 = new Board();
+        resetBoard(board1);
+        board1.setCell(0, 0, new Cell(2));
+        board1.setCell(1, 0, new Cell(8));
+        board1.moveDown();
+        assertEquals(board1.getCell(3,0).getValue(), 8);
+    }
+
+
+    @Test
+    public void testMoveUP(){
+        Board board1 = new Board();
+        resetBoard(board1);
+        board1.setCell(0, 0, new Cell(2));
+        board1.setCell(1, 0, new Cell(2));
+        board1.moveUp();
+        assertEquals(board1.getCell(0,0).getValue(), 4);
+    }
+
+    @Test
+    public void testMoveUP2(){
+        Board board1 = new Board();
+        resetBoard(board1);
+        board1.setCell(0, 0, new Cell(2));
+        board1.setCell(1, 0, new Cell(16));
+        board1.moveUp();
+        assertEquals(board1.getCell(0,0).getValue(), 2);
+    }
+
+    @Test
+    public void testMoveleft(){
+        Board board1 = new Board();
+        resetBoard(board1);
+        board1.setCell(0, 3, new Cell(16));
+        board1.setCell(0, 2, new Cell(16));
+        board1.moveLeft();
+        assertEquals(board1.getCell(0,0).getValue(), 32);
+    }
+
+    @Test
+    public void testMoveleft2(){
+        Board board1 = new Board();
+        resetBoard(board1);
+        board1.setCell(0, 3, new Cell(16));
+        board1.setCell(0, 2, new Cell(4));
+        board1.moveLeft();
+        assertEquals(board1.getCell(0,0).getValue(), 4);
+    }
+
+    @Test
+    public void testMoveRight(){
+        Board board1 = new Board();
+        resetBoard(board1);
+        board1.setCell(0, 3, new Cell(16));
+        board1.setCell(0, 2, new Cell(16));
+        board1.moveRight();
+        assertEquals(board1.getCell(0,3).getValue(), 32);
+    }
+
+    @Test
+    public void testMoveRight2(){
+        Board board1 = new Board();
+        resetBoard(board1);
+        board1.setCell(0, 3, new Cell(16));
+        board1.setCell(0, 2, new Cell(2));
+        board1.moveRight();
+        assertEquals(board1.getCell(0,3).getValue(), 16);
+    }
+
+
 }
