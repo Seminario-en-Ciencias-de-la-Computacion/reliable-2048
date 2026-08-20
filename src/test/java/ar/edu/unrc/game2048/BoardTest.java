@@ -1,6 +1,7 @@
 package ar.edu.unrc.game2048;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -98,6 +99,16 @@ public class BoardTest {
     }
 
     @Test
+    public void testMoveUP3(){
+        Board board1 = new Board();
+        resetBoard(board1);
+        board1.setCell(2, 0, new Cell(2));
+        board1.setCell(3, 0, new Cell(2));
+        board1.moveUp();
+        assertEquals(board1.getCell(0,0).getValue(), 4);
+    }
+
+    @Test
     public void testMoveleft(){
         Board board1 = new Board();
         resetBoard(board1);
@@ -137,5 +148,99 @@ public class BoardTest {
         assertEquals(board1.getCell(0,3).getValue(), 16);
     }
 
+    // TESTS PARA WINNING Y LOSING BOARD
+    @Test
+    public void testWinningBoard1(){
+        Board board = new Board();
+        assertFalse(board.isWinningBoard());
+        board.setCell(2, 3,new Cell(Board.WINNING_VALUE));
+        assertTrue(board.isWinningBoard());
+    }
 
+    @Test
+    public void testWinningAndLosingBoard(){
+        Board board = new Board();
+        assertFalse(board.isLosingBoard());
+
+        // Relleno tablero para crear posicion perdedora
+        int[][] values = {
+            {2, 4, 2, 4},
+            {4, 2, 4, 2},
+            {2, 4, 2, 4},
+            {4, 2, 4, Board.WINNING_VALUE}
+        };
+
+        for (int i = 0; i < board.getSize(); i++){
+            for (int j = 0; j < board.getSize(); j++){
+                board.setCell(i, j, new Cell(values[i][j]));
+            }
+        }
+        
+        assertTrue(board.isWinningBoard());
+        assertFalse(board.isLosingBoard());
+    }
+
+    @Test
+    public void testLosingBoard1(){
+        Board board = new Board();
+        assertFalse(board.isLosingBoard());
+
+        // Relleno tablero para crear posicion perdedora
+        int[][] values = {
+            {2, 4, 2, 4},
+            {4, 2, 4, 2},
+            {2, 4, 2, 4},
+            {4, 2, 4, 2}
+        };
+
+        for (int i = 0; i < board.getSize(); i++){
+            for (int j = 0; j < board.getSize(); j++){
+                board.setCell(i, j, new Cell(values[i][j]));
+            }
+        }
+        
+        assertTrue(board.isLosingBoard());
+    }
+
+    @Test
+    public void testLosingBoard2(){
+        Board board = new Board();
+
+        // Relleno tablero para crear posicion
+        int[][] values = {
+            {2, 4, 2, 4},
+            {4, 2, 4, 2},
+            {2, 4, 2, 4},
+            {4, 2, 8, 8}
+        };
+
+        for (int i = 0; i < board.getSize(); i++){
+            for (int j = 0; j < board.getSize(); j++){
+                board.setCell(i, j, new Cell(values[i][j]));
+            }
+        }
+        
+        assertFalse(board.isLosingBoard());
+    }
+
+    @Test
+    public void testLosingBoard3(){
+        Board board = new Board();
+
+        // Relleno tablero para crear posicion
+        int[][] values = {
+            {2, 8, 8, 4},
+            {4, 2, 4, 2},
+            {2, 4, 2, 4},
+            {4, 2, 4, 2}
+        };
+
+        for (int i = 0; i < board.getSize(); i++){
+            for (int j = 0; j < board.getSize(); j++){
+                board.setCell(i, j, new Cell(values[i][j]));
+            }
+        }
+        
+        assertFalse(board.isLosingBoard());
+    }    
 }
