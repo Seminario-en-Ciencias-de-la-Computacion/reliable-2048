@@ -147,6 +147,30 @@ public class BoardTest {
         board1.moveRight();
         assertEquals(board1.getCell(0,3).getValue(), 16);
     }
+    // TESTS PARA CHEQUEAR MOVIMIENTOS INVÁLIDOS
+    @Test 
+    public void testMoverIzquierdaYArriba() {
+        Board board = new Board();
+        resetBoard(board);
+        Cell celda = new Cell(16);
+        board.setCell(0, 0, celda);
+
+        assertFalse(board.moveLeft());
+        assertFalse(board.moveUp());
+        assertEquals(board.getCell(0, 0), celda);
+    }
+
+    @Test 
+    public void testMoverDerechaYAbajo() {
+        Board board = new Board();
+        resetBoard(board);
+        Cell celda = new Cell(16);
+        board.setCell(3, 3, celda);
+
+        assertFalse(board.moveRight());
+        assertFalse(board.moveDown());
+        assertEquals(board.getCell(3, 3), celda);
+    }
 
     // TESTS PARA WINNING Y LOSING BOARD
     @Test
@@ -156,7 +180,7 @@ public class BoardTest {
         board.setCell(2, 3,new Cell(Board.WINNING_VALUE));
         assertTrue(board.isWinningBoard());
     }
-
+ 
     @Test
     public void testWinningAndLosingBoard(){
         Board board = new Board();
@@ -229,8 +253,8 @@ public class BoardTest {
 
         // Relleno tablero para crear posicion
         int[][] values = {
-            {2, 8, 8, 4},
-            {4, 2, 4, 2},
+            {2, 8, 2, 4},
+            {4, 8, 4, 2},
             {2, 4, 2, 4},
             {4, 2, 4, 2}
         };
@@ -241,6 +265,21 @@ public class BoardTest {
             }
         }
         
+        assertFalse(board.isLosingBoard());
+    }
+
+    @Test
+    public void testLosingBoard4() {
+        Board board = new Board();
+
+        for (int row = 0; row < board.getSize(); row++) {
+            for (int col = 0; col < board.getSize(); col++) {
+                board.setCell(row, col, new Cell(2));
+            }
+        }
+
+        board.setCell(2, 2, new Cell(0));
+
         assertFalse(board.isLosingBoard());
     }
 
@@ -271,7 +310,48 @@ public class BoardTest {
                 board.setCell(i, j, new Cell(4));
             }
         }
-        
+
         assertTrue(board.isFull());
+    }
+
+    @Test
+    public void testScore(){
+        Board board = new Board();
+        resetBoard(board);
+
+        board.setCell(0, 0, new Cell(2));
+        board.setCell(1, 0, new Cell(2));
+
+        board.moveUp();
+
+        assertEquals(4, board.getScore());
+    }
+
+    @Test
+    public void testScore2(){
+        Board board = new Board();
+        resetBoard(board);
+
+        board.setCell(0, 0, new Cell(2));
+        board.setCell(1, 0, new Cell(2));
+        board.setCell(2, 0, new Cell(4));
+        board.setCell(3, 0, new Cell(4));
+
+        board.moveUp();
+
+        assertEquals(12, board.getScore());
+    }
+
+    @Test
+    public void testScore3(){
+        Board board = new Board();
+        resetBoard(board);
+
+        board.setCell(0, 0, new Cell(2));
+        board.setCell(1, 0, new Cell(4));
+
+        board.moveUp();
+
+        assertEquals(0, board.getScore());
     }
 }
