@@ -8,8 +8,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 public class BoardTest {
-    
+    // Helpers
+    private void resetBoard(Board b1){
+        Cell aux =  new Cell(0);
+        for(int i = 0; i < b1.getSize(); i++){
+            for(int j = 0 ; j < b1.getSize(); j++){
+                b1.setCell(i, j, aux);
+            }
+        }
+    }
 
+    // Tests
     @Test
     public void testBoardCreation(){
         Board board1 = new Board();
@@ -46,15 +55,6 @@ public class BoardTest {
     public void testGetCell(){
         Board board1 = new Board(3);
         assertThrows(IndexOutOfBoundsException.class,() ->  board1.getCell(5, 5));
-    }
-
-    private void resetBoard(Board b1){
-        Cell aux =  new Cell(0);
-        for(int i = 0; i < b1.getSize(); i++){
-            for(int j = 0 ; j < b1.getSize(); j++){
-                b1.setCell(i, j, aux);
-            }
-        }
     }
 
     @Test
@@ -242,5 +242,36 @@ public class BoardTest {
         }
         
         assertFalse(board.isLosingBoard());
-    }    
+    }
+
+    @Test 
+    public void testHasEmptyCells() {
+        // Este test también prueba el método getEmptyPositions(), ya que hasEmptyCells() lo usa internamente.
+        Board board = new Board();
+        assertTrue(board.hasEmptyCells());
+
+        for (int i = 0; i < board.getSize(); i++){
+            for (int j = 0; j < board.getSize(); j++){
+                board.setCell(i, j, new Cell(4));
+            }
+        }
+
+        assertFalse(board.hasEmptyCells());
+        board.setCell(0, 3, new Cell(0));
+        assertTrue(board.hasEmptyCells());
+    }
+
+    @Test
+    public void testIsFull(){
+        Board board = new Board();
+        assertTrue(board.hasEmptyCells());
+
+        for (int i = 0; i < board.getSize(); i++){
+            for (int j = 0; j < board.getSize(); j++){
+                board.setCell(i, j, new Cell(4));
+            }
+        }
+        
+        assertTrue(board.isFull());
+    }
 }
