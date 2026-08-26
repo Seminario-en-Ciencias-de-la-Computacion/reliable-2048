@@ -211,6 +211,9 @@ public class Board {
         if (hasEmptyCells()) {
             return false;
         }
+        if(isWinningBoard()){
+            return false;
+        }
 
         // Check for possible merges
         for (int r = 0; r < size; r++) {
