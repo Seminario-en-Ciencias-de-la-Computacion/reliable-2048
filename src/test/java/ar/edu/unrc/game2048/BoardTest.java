@@ -75,6 +75,7 @@ public class BoardTest {
         board1.setCell(1, 0, new Cell(8));
         board1.moveDown();
         assertEquals(board1.getCell(3,0).getValue(), 8);
+        assertEquals(board1.getCell(2,0).getValue(), 2);
     }
 
 
