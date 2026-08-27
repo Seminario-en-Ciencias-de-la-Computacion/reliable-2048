@@ -2,6 +2,8 @@ package ar.edu.unrc.game2048;
 
 import java.util.Scanner;
 
+import ar.edu.unrc.game2048.Board.Direction;
+
 /**
  * Command-line interface for the 2048 game.
  * 
@@ -49,10 +51,10 @@ public class MainCLI {
             
             boolean moved = false;
             switch (input) {
-                case "W": moved = board.moveUp(); break;
-                case "S": moved = board.moveDown(); break;
-                case "A": moved = board.moveLeft(); break;
-                case "D": moved = board.moveRight(); break;
+                case "W": moved = board.move(Direction.UP); break;
+                case "S": moved = board.move(Direction.DOWN); break;
+                case "A": moved = board.move(Direction.LEFT); break;
+                case "D": moved = board.move(Direction.RIGHT); break;
                 default: 
                     System.out.println("Invalid input! Use W, A, S, D, or Q.");
                     continue;

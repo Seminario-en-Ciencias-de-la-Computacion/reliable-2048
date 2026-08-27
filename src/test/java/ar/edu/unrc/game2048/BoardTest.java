@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
+import ar.edu.unrc.game2048.Board.Direction;
+
 public class BoardTest {
     // Helpers
     private void resetBoard(Board b1){
@@ -63,7 +65,7 @@ public class BoardTest {
         resetBoard(board1);
         board1.setCell(0, 0, new Cell(2));
         board1.setCell(1, 0, new Cell(2));
-        board1.moveDown();
+        board1.move(Direction.DOWN);
         assertEquals(board1.getCell(3,0).getValue(), 4);
     }
 
@@ -73,7 +75,7 @@ public class BoardTest {
         resetBoard(board1);
         board1.setCell(0, 0, new Cell(2));
         board1.setCell(1, 0, new Cell(8));
-        board1.moveDown();
+        board1.move(Direction.DOWN);
         assertEquals(board1.getCell(3,0).getValue(), 8);
         assertEquals(board1.getCell(2,0).getValue(), 2);
     }
@@ -85,7 +87,7 @@ public class BoardTest {
         resetBoard(board1);
         board1.setCell(0, 0, new Cell(2));
         board1.setCell(1, 0, new Cell(2));
-        board1.moveUp();
+        board1.move(Direction.UP);
         assertEquals(board1.getCell(0,0).getValue(), 4);
     }
 
@@ -95,7 +97,7 @@ public class BoardTest {
         resetBoard(board1);
         board1.setCell(0, 0, new Cell(2));
         board1.setCell(1, 0, new Cell(16));
-        board1.moveUp();
+        board1.move(Direction.UP);
         assertEquals(board1.getCell(0,0).getValue(), 2);
     }
 
@@ -105,7 +107,7 @@ public class BoardTest {
         resetBoard(board1);
         board1.setCell(2, 0, new Cell(2));
         board1.setCell(3, 0, new Cell(2));
-        board1.moveUp();
+        board1.move(Direction.UP);
         assertEquals(board1.getCell(0,0).getValue(), 4);
     }
 
@@ -115,7 +117,7 @@ public class BoardTest {
         resetBoard(board1);
         board1.setCell(0, 3, new Cell(16));
         board1.setCell(0, 2, new Cell(16));
-        board1.moveLeft();
+        board1.move(Direction.LEFT);
         assertEquals(board1.getCell(0,0).getValue(), 32);
     }
 
@@ -125,7 +127,7 @@ public class BoardTest {
         resetBoard(board1);
         board1.setCell(0, 3, new Cell(16));
         board1.setCell(0, 2, new Cell(4));
-        board1.moveLeft();
+        board1.move(Direction.LEFT);
         assertEquals(board1.getCell(0,0).getValue(), 4);
     }
 
@@ -135,7 +137,7 @@ public class BoardTest {
         resetBoard(board1);
         board1.setCell(0, 3, new Cell(16));
         board1.setCell(0, 2, new Cell(16));
-        board1.moveRight();
+        board1.move(Direction.RIGHT);
         assertEquals(board1.getCell(0,3).getValue(), 32);
     }
 
@@ -145,7 +147,7 @@ public class BoardTest {
         resetBoard(board1);
         board1.setCell(0, 3, new Cell(16));
         board1.setCell(0, 2, new Cell(2));
-        board1.moveRight();
+        board1.move(Direction.RIGHT);
         assertEquals(board1.getCell(0,3).getValue(), 16);
     }
     // TESTS PARA CHEQUEAR MOVIMIENTOS INVÁLIDOS
@@ -156,8 +158,8 @@ public class BoardTest {
         Cell celda = new Cell(16);
         board.setCell(0, 0, celda);
 
-        assertFalse(board.moveLeft());
-        assertFalse(board.moveUp());
+        assertFalse(board.move(Direction.LEFT));
+        assertFalse(board.move(Direction.UP));
         assertEquals(board.getCell(0, 0), celda);
     }
 
@@ -168,8 +170,8 @@ public class BoardTest {
         Cell celda = new Cell(16);
         board.setCell(3, 3, celda);
 
-        assertFalse(board.moveRight());
-        assertFalse(board.moveDown());
+        assertFalse(board.move(Direction.RIGHT));
+        assertFalse(board.move(Direction.DOWN));
         assertEquals(board.getCell(3, 3), celda);
     }
 
@@ -323,7 +325,7 @@ public class BoardTest {
         board.setCell(0, 0, new Cell(2));
         board.setCell(1, 0, new Cell(2));
 
-        board.moveUp();
+        board.move(Direction.UP);
 
         assertEquals(4, board.getScore());
     }
@@ -338,7 +340,7 @@ public class BoardTest {
         board.setCell(2, 0, new Cell(4));
         board.setCell(3, 0, new Cell(4));
 
-        board.moveUp();
+        board.move(Direction.UP);
 
         assertEquals(12, board.getScore());
     }
@@ -351,7 +353,7 @@ public class BoardTest {
         board.setCell(0, 0, new Cell(2));
         board.setCell(1, 0, new Cell(4));
 
-        board.moveUp();
+        board.move(Direction.UP);
 
         assertEquals(0, board.getScore());
     }
