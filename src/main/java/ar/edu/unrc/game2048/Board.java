@@ -211,13 +211,16 @@ public class Board {
         if (hasEmptyCells()) {
             return false;
         }
+        if(isWinningBoard()){
+            return false;
+        }
 
         // Check for possible merges
         for (int r = 0; r < size; r++) {
             for (int c = 0; c < size; c++) {
                 Cell current = grid[r][c];
                 // Check right neighbor
-                if (c + 1 < size - 1 && current.canMergeWith(grid[r][c + 1])) {
+                if (c + 1 < size && current.canMergeWith(grid[r][c + 1])) {
                     return false;
                 }
                 // Check down neighbor
@@ -241,235 +244,113 @@ public class Board {
     // ==================== MOVE OPERATIONS (WITH DESIGN PROBLEMS) ====================
 
     /**
-     * Moves all tiles upward.
-     *
-     * @return true if the board changed, false otherwise
-     */
-    public boolean moveUp() {
+    * Moves all tiles in specified direction
+    *
+    * @return true if the board changed, false otherwise
+    */
+    public boolean move(Direction direction){
         Board previous = new Board(this);
 
-        // For each column, slide up
-        for (int col = 0; col < size; col++) {
-            // Create a list of cells from top to bottom
-            List<Cell> column = new ArrayList<>();
-            for (int row = 0; row < size; row++) {
-                column.add(grid[row][col]);
-            }
-
-            // Remove empty cells (slide up)
-            List<Cell> nonEmpty = new ArrayList<>();
-            for (Cell cell : column) {
-                if (!cell.isEmpty()) {
-                    nonEmpty.add(cell);
-                }
-            }
-
-            // Merge adjacent equal cells
-            List<Cell> merged = new ArrayList<>();
-            int i = 0;
-            while (i < nonEmpty.size()) {
-                if (i + 1 < nonEmpty.size() &&
-                        nonEmpty.get(i).canMergeWith(nonEmpty.get(i + 1))) {
-                    Cell mergedCell = nonEmpty.get(i).mergeWith(nonEmpty.get(i + 1));
-                    merged.add(mergedCell);
-                    score += mergedCell.getValue();
-                    i += 2;
-                } else {
-                    merged.add(nonEmpty.get(i));
-                    i++;
-                }
-            }
-
-            // Pad with empty cells
-            while (merged.size() < size) {
-                merged.add(Cell.EMPTY);
-            }
-
-            // Put back into the column
-            for (int row = 0; row < size; row++) {
-                grid[row][col] = merged.get(row);
-            }
+        for (int i = 0; i < this.size; i++){
+            List<Cell> line = getLine(i, direction);
+            List<Cell> processed = processLine(line);
+            setLine(i, direction, processed);
         }
 
         boolean moved = !this.equals(previous);
+
         if (moved) {
             addRandomTile(); // Add new random tile after successful move
         }
         return moved;
+
     }
 
-    /**
-     * Moves all tiles downward.
-     *
-     * @return true if the board changed, false otherwise
-     */
-    public boolean moveDown() {
-        Board previous = new Board(this);
+    private List<Cell> getLine(int index, Direction direction){
+        List<Cell> line = new ArrayList<>();
 
-        // For each column, slide down
-        for (int col = 0; col < size; col++) {
-            // Create a list of cells from bottom to top (reverse order)
-            List<Cell> column = new ArrayList<>();
-            for (int row = size - 1; row > 0; row--) {
-                column.add(grid[row][col]);
-            }
-
-            // Remove empty cells
-            List<Cell> nonEmpty = new ArrayList<>();
-            for (Cell cell : column) {
-                if (!cell.isEmpty()) {
-                    nonEmpty.add(cell);
+        switch (direction) {
+            case UP:
+                for (int row = 0; row < size; row++){
+                    line.add(grid[row][index]);
                 }
-            }
-
-            // Merge adjacent equal cells
-            List<Cell> merged = new ArrayList<>();
-            int i = 0;
-            while (i < nonEmpty.size()) {
-                if (i + 1 < nonEmpty.size() &&
-                        nonEmpty.get(i).canMergeWith(nonEmpty.get(i + 1))) {
-                    Cell mergedCell = nonEmpty.get(i).mergeWith(nonEmpty.get(i + 1));
-                    merged.add(mergedCell);
-                    score += mergedCell.getValue();
-                    i += 2;
-                } else {
-                    merged.add(nonEmpty.get(i));
-                    i++;
+                break;
+            case DOWN:
+                for (int row = size - 1; row >= 0; row--){
+                    line.add(grid[row][index]);
                 }
-            }
-
-            // Pad with empty cells
-            while (merged.size() < size) {
-                merged.add(Cell.EMPTY);
-            }
-
-            // Put back into the column (reverse back to original order)
-            for (int row = size - 1; row >= 0; row--) {
-                grid[row][col] = merged.get(size - 1 - row);
-            }
+                break;
+            case LEFT:
+                for (int col = 0; col < size; col++){
+                    line.add(grid[index][col]);
+                }
+                break;
+            case RIGHT:
+                for (int col = size - 1; col >= 0; col--){
+                    line.add(grid[index][col]);
+                }
+                break;
         }
-
-        boolean moved = !this.equals(previous);
-        if (moved) {
-            addRandomTile(); // Add new random tile after successful move
-        }
-        return moved;
+        
+        return line;
     }
 
-    /**
-     * Moves all tiles left.
-     *
-     * @return true if the board changed, false otherwise
-     */
-    public boolean moveLeft() {
-        Board previous = new Board(this);
-
-        // For each row, slide left
-        for (int row = 0; row < size; row++) {
-            // Create a list of cells from left to right
-            List<Cell> rowList = new ArrayList<>();
-            for (int col = 0; col < size; col++) {
-                rowList.add(grid[row][col]);
-            }
-
-            // Remove empty cells
-            List<Cell> nonEmpty = new ArrayList<>();
-            for (Cell cell : rowList) {
-                if (!cell.isEmpty()) {
-                    nonEmpty.add(cell);
-                }
-            }
-
-            // Merge adjacent equal cells
-            List<Cell> merged = new ArrayList<>();
-            int i = 0;
-            while (i < nonEmpty.size()) {
-                if (i + 1 < nonEmpty.size() &&
-                        nonEmpty.get(i).canMergeWith(nonEmpty.get(i + 1))) {
-                    Cell mergedCell = nonEmpty.get(i).mergeWith(nonEmpty.get(i + 1));
-                    merged.add(mergedCell);
-                    score += mergedCell.getValue();
-                    i += 2;
-                } else {
-                    merged.add(nonEmpty.get(i));
-                    i++;
-                }
-            }
-
-            // Pad with empty cells
-            while (merged.size() < size) {
-                merged.add(Cell.EMPTY);
-            }
-
-            // Put back into the row
-            for (int col = 0; col < size; col++) {
-                grid[row][col] = merged.get(col);
+    private List<Cell> processLine(List<Cell> line){
+        // Remove empty cells
+        List<Cell> nonEmpty = new ArrayList<>();
+        for (Cell cell : line) {
+            if (!cell.isEmpty()) {
+                nonEmpty.add(cell);
             }
         }
 
-        boolean moved = !this.equals(previous);
-        if (moved) {
-            addRandomTile(); // Add new random tile after successful move
+        // Merge adjacent equal cells
+        List<Cell> merged = new ArrayList<>();
+        int i = 0;
+        while (i < nonEmpty.size()) {
+            if (i + 1 < nonEmpty.size() 
+                        && nonEmpty.get(i).canMergeWith(nonEmpty.get(i + 1))) {
+                Cell mergedCell = nonEmpty.get(i).mergeWith(nonEmpty.get(i + 1));
+                merged.add(mergedCell);
+                score += mergedCell.getValue();
+                i += 2;
+            } else {
+                merged.add(nonEmpty.get(i));
+                i++;
+            }
         }
-        return moved;
+
+        // Pad with empty cells
+        while (merged.size() < size) {
+            merged.add(Cell.EMPTY);
+        }
+
+        return merged;
     }
 
-    /**
-     * Moves all tiles right.
-     *
-     * @return true if the board changed, false otherwise
-     */
-    public boolean moveRight() {
-        Board previous = new Board(this);
-
-        // For each row, slide right
-        for (int row = 0; row < size; row++) {
-            // Create a list of cells from right to left (reverse order)
-            List<Cell> rowList = new ArrayList<>();
-            for (int col = size - 1; col >= 0; col--) {
-                rowList.add(grid[row][col]);
-            }
-
-            // Remove empty cells
-            List<Cell> nonEmpty = new ArrayList<>();
-            for (Cell cell : rowList) {
-                if (!cell.isEmpty()) {
-                    nonEmpty.add(cell);
+    private void setLine(int index, Direction direction, List<Cell> line){
+        switch (direction) {
+            case UP:
+                for (int row = 0; row < size; row++){
+                    grid[row][index] = line.get(row);
                 }
-            }
-
-            // Merge adjacent equal cells
-            List<Cell> merged = new ArrayList<>();
-            int i = 0;
-            while (i < nonEmpty.size()) {
-                if (i + 1 < nonEmpty.size() &&
-                        nonEmpty.get(i).canMergeWith(nonEmpty.get(i + 1))) {
-                    Cell mergedCell = nonEmpty.get(i).mergeWith(nonEmpty.get(i + 1));
-                    merged.add(mergedCell);
-                    score += mergedCell.getValue();
-                    i += 2;
-                } else {
-                    merged.add(nonEmpty.get(i));
-                    i++;
+                break;
+            case DOWN:
+                for (int row = size - 1; row >= 0; row--){
+                    grid[row][index] = line.get(size - 1 - row);
                 }
-            }
-
-            // Pad with empty cells
-            while (merged.size() < size) {
-                merged.add(Cell.EMPTY);
-            }
-
-            // Put back into the row (reverse back to original order)
-            for (int col = size - 1; col >= 0; col--) {
-                grid[row][col] = merged.get(size - 1 - col);
-            }
+                break;
+            case LEFT:
+                for (int col = 0; col < size; col++){
+                    grid[index][col] = line.get(col);
+                }
+                break;
+            case RIGHT:
+                for (int col = size - 1; col >= 0; col--){
+                    grid[index][col] = line.get(size - 1 - col);
+                }
+                break;
         }
-
-        boolean moved = !this.equals(previous);
-        if (moved) {
-            addRandomTile(); // Add new random tile after successful move
-        }
-        return moved;
     }
 
     // ==================== RANDOM TILE ADDITION (PRIVATE) ====================
