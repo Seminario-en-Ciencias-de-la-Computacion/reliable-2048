@@ -2,6 +2,9 @@ package ar.edu.unrc.game2048;
 
 import java.util.*;
 
+import ar.edu.unrc.game2048.GenerateCellStrategy;
+import ar.edu.unrc.game2048.GenerateRandomCellStrategy;
+
 /**
  * Represents the 2048 game board.
  * The board is a square grid of Cells, typically 4x4.
@@ -36,6 +39,8 @@ public class Board {
      */
     private final Cell[][] grid;
 
+    private GenerateCellStrategy str;
+
     /**
      * Game accumulated score.
      */
@@ -45,7 +50,9 @@ public class Board {
      * Creates a new board of the default size (4x4) with two random tiles.
      */
     public Board() {
-        this(DEFAULT_SIZE);
+        this(DEFAULT_SIZE, new GenerateRandomCellStrategy());
+
+        assert repOk();
     }
 
     /**
@@ -55,15 +62,24 @@ public class Board {
      * @throws IllegalArgumentException if size <= 0
      */
     public Board(int size) {
+        this(size, new GenerateRandomCellStrategy());
+
+        assert repOk();
+    }
+
+    public Board(int size, GenerateCellStrategy str) {
         if (size <= 0) {
             throw new IllegalArgumentException("Board size must be positive: " + size);
         }
         this.size = size;
         this.grid = new Cell[size][size];
         this.score = 0;
+        this.str = str;
         initializeEmpty();
-        addRandomTile();
-        addRandomTile();
+        str.addTile(this);
+        str.addTile(this);
+
+        assert repOk();    
     }
 
     /**
@@ -75,11 +91,13 @@ public class Board {
         this.size = other.size;
         this.grid = new Cell[size][size];
         this.score = other.score;
+        this.str = other.str;
         for (int r = 0; r < size; r++) {
             for (int c = 0; c < size; c++) {
                 this.grid[r][c] = other.grid[r][c];
             }
         }
+        assert repOk();
     }
 
     /**
@@ -139,6 +157,8 @@ public class Board {
             throw new IllegalArgumentException("Cell cannot be null");
         }
         grid[row][col] = cell;
+
+        assert repOk();
     }
 
     /**
@@ -217,7 +237,7 @@ public class Board {
             for (int c = 0; c < size; c++) {
                 Cell current = grid[r][c];
                 // Check right neighbor
-                if (c + 1 < size - 1 && current.canMergeWith(grid[r][c + 1])) {
+                if (c + 1 < size && current.canMergeWith(grid[r][c + 1])) {
                     return false;
                 }
                 // Check down neighbor
@@ -257,28 +277,10 @@ public class Board {
             }
 
             // Remove empty cells (slide up)
-            List<Cell> nonEmpty = new ArrayList<>();
-            for (Cell cell : column) {
-                if (!cell.isEmpty()) {
-                    nonEmpty.add(cell);
-                }
-            }
+            List<Cell> nonEmpty = removeEmptyCells(column);
 
             // Merge adjacent equal cells
-            List<Cell> merged = new ArrayList<>();
-            int i = 0;
-            while (i < nonEmpty.size()) {
-                if (i + 1 < nonEmpty.size() &&
-                        nonEmpty.get(i).canMergeWith(nonEmpty.get(i + 1))) {
-                    Cell mergedCell = nonEmpty.get(i).mergeWith(nonEmpty.get(i + 1));
-                    merged.add(mergedCell);
-                    score += mergedCell.getValue();
-                    i += 2;
-                } else {
-                    merged.add(nonEmpty.get(i));
-                    i++;
-                }
-            }
+            List<Cell> merged = mergeAdjacentEqualCells(nonEmpty);
 
             // Pad with empty cells
             while (merged.size() < size) {
@@ -293,8 +295,10 @@ public class Board {
 
         boolean moved = !this.equals(previous);
         if (moved) {
-            addRandomTile(); // Add new random tile after successful move
+            str.addTile(this); // Add new random tile after successful move
         }
+        assert repOk();
+
         return moved;
     }
 
@@ -310,33 +314,15 @@ public class Board {
         for (int col = 0; col < size; col++) {
             // Create a list of cells from bottom to top (reverse order)
             List<Cell> column = new ArrayList<>();
-            for (int row = size - 1; row > 0; row--) {
+            for (int row = size - 1; row >= 0; row--) {
                 column.add(grid[row][col]);
             }
 
             // Remove empty cells
-            List<Cell> nonEmpty = new ArrayList<>();
-            for (Cell cell : column) {
-                if (!cell.isEmpty()) {
-                    nonEmpty.add(cell);
-                }
-            }
+            List<Cell> nonEmpty = removeEmptyCells(column);
 
             // Merge adjacent equal cells
-            List<Cell> merged = new ArrayList<>();
-            int i = 0;
-            while (i < nonEmpty.size()) {
-                if (i + 1 < nonEmpty.size() &&
-                        nonEmpty.get(i).canMergeWith(nonEmpty.get(i + 1))) {
-                    Cell mergedCell = nonEmpty.get(i).mergeWith(nonEmpty.get(i + 1));
-                    merged.add(mergedCell);
-                    score += mergedCell.getValue();
-                    i += 2;
-                } else {
-                    merged.add(nonEmpty.get(i));
-                    i++;
-                }
-            }
+            List<Cell> merged = mergeAdjacentEqualCells(nonEmpty);
 
             // Pad with empty cells
             while (merged.size() < size) {
@@ -351,8 +337,10 @@ public class Board {
 
         boolean moved = !this.equals(previous);
         if (moved) {
-            addRandomTile(); // Add new random tile after successful move
+            str.addTile(this); // Add new random tile after successful move
         }
+        assert repOk();
+
         return moved;
     }
 
@@ -373,28 +361,10 @@ public class Board {
             }
 
             // Remove empty cells
-            List<Cell> nonEmpty = new ArrayList<>();
-            for (Cell cell : rowList) {
-                if (!cell.isEmpty()) {
-                    nonEmpty.add(cell);
-                }
-            }
+            List<Cell> nonEmpty = removeEmptyCells(rowList);
 
             // Merge adjacent equal cells
-            List<Cell> merged = new ArrayList<>();
-            int i = 0;
-            while (i < nonEmpty.size()) {
-                if (i + 1 < nonEmpty.size() &&
-                        nonEmpty.get(i).canMergeWith(nonEmpty.get(i + 1))) {
-                    Cell mergedCell = nonEmpty.get(i).mergeWith(nonEmpty.get(i + 1));
-                    merged.add(mergedCell);
-                    score += mergedCell.getValue();
-                    i += 2;
-                } else {
-                    merged.add(nonEmpty.get(i));
-                    i++;
-                }
-            }
+            List<Cell> merged = mergeAdjacentEqualCells(nonEmpty);
 
             // Pad with empty cells
             while (merged.size() < size) {
@@ -409,8 +379,10 @@ public class Board {
 
         boolean moved = !this.equals(previous);
         if (moved) {
-            addRandomTile(); // Add new random tile after successful move
+            str.addTile(this); // Add new random tile after successful move
         }
+        assert repOk();
+
         return moved;
     }
 
@@ -431,28 +403,10 @@ public class Board {
             }
 
             // Remove empty cells
-            List<Cell> nonEmpty = new ArrayList<>();
-            for (Cell cell : rowList) {
-                if (!cell.isEmpty()) {
-                    nonEmpty.add(cell);
-                }
-            }
+            List<Cell> nonEmpty = removeEmptyCells(rowList);
 
             // Merge adjacent equal cells
-            List<Cell> merged = new ArrayList<>();
-            int i = 0;
-            while (i < nonEmpty.size()) {
-                if (i + 1 < nonEmpty.size() &&
-                        nonEmpty.get(i).canMergeWith(nonEmpty.get(i + 1))) {
-                    Cell mergedCell = nonEmpty.get(i).mergeWith(nonEmpty.get(i + 1));
-                    merged.add(mergedCell);
-                    score += mergedCell.getValue();
-                    i += 2;
-                } else {
-                    merged.add(nonEmpty.get(i));
-                    i++;
-                }
-            }
+            List<Cell> merged = mergeAdjacentEqualCells(nonEmpty);
 
             // Pad with empty cells
             while (merged.size() < size) {
@@ -467,10 +421,41 @@ public class Board {
 
         boolean moved = !this.equals(previous);
         if (moved) {
-            addRandomTile(); // Add new random tile after successful move
+            str.addTile(this); // Add new random tile after successful move
         }
+        assert repOk();
+
         return moved;
     }
+
+    // Remove empty cells
+    private List<Cell> removeEmptyCells(List<Cell> cellList) {
+        List<Cell> nonEmpty = new ArrayList<>();
+
+        for (Cell cell: cellList) {
+            if (!cell.isEmpty()) nonEmpty.add(cell);
+        }
+        return nonEmpty;
+    }
+
+    private List<Cell> mergeAdjacentEqualCells(List<Cell> cellList) {
+        List<Cell> merged = new ArrayList<>();
+        int i = 0;
+        while (i < cellList.size()) {
+            if (i + 1 < cellList.size() &&
+                    cellList.get(i).canMergeWith(cellList.get(i + 1))) {
+                Cell mergedCell = cellList.get(i).mergeWith(cellList.get(i + 1));
+                merged.add(mergedCell);
+                score += mergedCell.getValue();
+                i += 2;
+            } else {
+                merged.add(cellList.get(i));
+                i++;
+            }
+        }
+        return merged;
+    }
+
 
     // ==================== RANDOM TILE ADDITION (PRIVATE) ====================
 
@@ -481,22 +466,7 @@ public class Board {
      *
      * @return true if a tile was added, false if the board was full
      */
-    private boolean addRandomTile() {
-        Set<Position> empty = getEmptyPositions();
-        if (empty.isEmpty()) {
-            return false;
-        }
 
-        // Choose random position
-        int randomIndex = (int) (Math.random() * empty.size());
-        Position pos = empty.stream().skip(randomIndex).findFirst().get();
-
-        // 90% chance of 2, 10% chance of 4 (standard 2048 rules)
-        int value = Math.random() < 0.9 ? 2 : 4;
-        grid[pos.row][pos.col] = new Cell(value);
-
-        return true;
-    }
 
     // ==================== UTILITY METHODS ====================
 
@@ -589,5 +559,37 @@ public class Board {
         public String toString() {
             return "(" + row + ", " + col + ")";
         }
+    }
+
+    /**
+     * Validates the representation invariant of the Board class.
+     * 
+     * @return true if the internal state is consistent; false otherwise
+     */
+    public boolean repOk(){
+        if(size <= 0)
+            return false;
+
+        if(score < 0)
+            return false;
+
+        if(str == null)
+            return false;
+
+        if(grid == null || grid.length != size)
+            return false;
+
+        for(int i = 0; i < size; i++){
+            if(grid[i] == null || grid[i].length != size)
+                return false;
+
+            for(int j = 0; j < size; j++){
+                if(grid[i][j] == null){
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 }
