@@ -2,6 +2,11 @@ package ar.edu.unrc.game2048;
 
 import java.util.*;
 
+import ar.edu.unrc.game2048.RandomNumGeneration.IRandom;
+import ar.edu.unrc.game2048.RandomNumGeneration.MathRandom;
+import ar.edu.unrc.game2048.strategy.*;
+import randoop.CheckRep;
+
 /**
  * Represents the 2048 game board.
  * The board is a square grid of Cells, typically 4x4.
@@ -36,6 +41,9 @@ public class Board {
      */
     private final Cell[][] grid;
 
+    /** Source of random values used when adding tiles. */
+    private final IRandom randomGeneration;
+
     /**
      * Game accumulated score.
      */
@@ -45,7 +53,7 @@ public class Board {
      * Creates a new board of the default size (4x4) with two random tiles.
      */
     public Board() {
-        this(DEFAULT_SIZE);
+        this(DEFAULT_SIZE, new MathRandom());
     }
 
     /**
@@ -55,15 +63,40 @@ public class Board {
      * @throws IllegalArgumentException if size <= 0
      */
     public Board(int size) {
+        this(size, new MathRandom());
+    }
+
+    /**
+     * Creates a board of the default size using the supplied random generator.
+     *
+     * @param randomGeneration generator used for tile positions and values
+     */
+    public Board(IRandom randomGeneration) {
+        this(DEFAULT_SIZE, randomGeneration);
+    }
+
+    /**
+     * Creates a board using the supplied random value generator.
+     *
+     * @param size the board size (must be > 0)
+     * @param randomGeneration generator used for tile positions and values
+     * @throws IllegalArgumentException if size <= 0 or the generator is null
+     */
+    public Board(int size, IRandom randomGeneration) {
         if (size <= 0) {
             throw new IllegalArgumentException("Board size must be positive: " + size);
         }
+        if (randomGeneration == null) {
+            throw new IllegalArgumentException("Random generator must not be null");
+        }
         this.size = size;
         this.grid = new Cell[size][size];
+        this.randomGeneration = randomGeneration;
         this.score = 0;
         initializeEmpty();
         addRandomTile();
         addRandomTile();
+        assert repOK();
     }
 
     /**
@@ -74,12 +107,14 @@ public class Board {
     public Board(Board other) {
         this.size = other.size;
         this.grid = new Cell[size][size];
+        this.randomGeneration = other.randomGeneration;
         this.score = other.score;
         for (int r = 0; r < size; r++) {
             for (int c = 0; c < size; c++) {
                 this.grid[r][c] = other.grid[r][c];
             }
         }
+        assert repOK();
     }
 
     /**
@@ -91,6 +126,7 @@ public class Board {
                 grid[r][c] = Cell.EMPTY;
             }
         }
+        assert repOK();
     }
 
     /**
@@ -109,6 +145,34 @@ public class Board {
      */
     public int getScore() {
         return score;
+    }
+
+    /**
+     * Checks whether this board satisfies its representation invariants.
+     *
+     * @return true if the board has a positive square shape, a non-negative
+     *         score, a non-null random generator, and only valid non-null cells
+     */
+    @CheckRep
+    public boolean repOK() {
+        if (size <= 0 || score < 0 || grid == null || grid.length != size) {
+            return false;
+        }
+        if (randomGeneration == null) {
+            return false;
+        }
+
+        for (Cell[] row : grid) {
+            if (row == null || row.length != size) {
+                return false;
+            }
+            for (Cell cell : row) {
+                if (cell == null || !cell.repOK()) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**
@@ -139,6 +203,7 @@ public class Board {
             throw new IllegalArgumentException("Cell cannot be null");
         }
         grid[row][col] = cell;
+        assert repOK();
     }
 
     /**
@@ -217,7 +282,7 @@ public class Board {
             for (int c = 0; c < size; c++) {
                 Cell current = grid[r][c];
                 // Check right neighbor
-                if (c + 1 < size - 1 && current.canMergeWith(grid[r][c + 1])) {
+                if (c + 1 < size && current.canMergeWith(grid[r][c + 1])) {
                     return false;
                 }
                 // Check down neighbor
@@ -239,22 +304,14 @@ public class Board {
     }
 
     // ==================== MOVE OPERATIONS (WITH DESIGN PROBLEMS) ====================
-
-    /**
-     * Moves all tiles upward.
-     *
-     * @return true if the board changed, false otherwise
-     */
-    public boolean moveUp() {
+    //NEW METHOD: Uses the strategys
+    public boolean move(MoveStrategy moveStrategy){
         Board previous = new Board(this);
 
-        // For each column, slide up
+        // For each column
         for (int col = 0; col < size; col++) {
-            // Create a list of cells from top to bottom
-            List<Cell> column = new ArrayList<>();
-            for (int row = 0; row < size; row++) {
-                column.add(grid[row][col]);
-            }
+            //Create a list of cells
+            List<Cell> column = moveStrategy.extractLine(this, col);
 
             // Remove empty cells (slide up)
             List<Cell> nonEmpty = new ArrayList<>();
@@ -286,15 +343,26 @@ public class Board {
             }
 
             // Put back into the column
-            for (int row = 0; row < size; row++) {
-                grid[row][col] = merged.get(row);
-            }
+            moveStrategy.writeLine(this, col, merged);
         }
 
         boolean moved = !this.equals(previous);
         if (moved) {
             addRandomTile(); // Add new random tile after successful move
         }
+        assert repOK();
+        return moved;
+    }
+
+    /**
+     * Moves all tiles upward.
+     *
+     * @return true if the board changed, false otherwise
+     */
+    public boolean moveUp() {
+        MoveStrategy upMoveStrategy = new UpMoveStrategy();
+        boolean moved = move(upMoveStrategy);
+        assert repOK();
         return moved;
     }
 
@@ -304,55 +372,9 @@ public class Board {
      * @return true if the board changed, false otherwise
      */
     public boolean moveDown() {
-        Board previous = new Board(this);
-
-        // For each column, slide down
-        for (int col = 0; col < size; col++) {
-            // Create a list of cells from bottom to top (reverse order)
-            List<Cell> column = new ArrayList<>();
-            for (int row = size - 1; row > 0; row--) {
-                column.add(grid[row][col]);
-            }
-
-            // Remove empty cells
-            List<Cell> nonEmpty = new ArrayList<>();
-            for (Cell cell : column) {
-                if (!cell.isEmpty()) {
-                    nonEmpty.add(cell);
-                }
-            }
-
-            // Merge adjacent equal cells
-            List<Cell> merged = new ArrayList<>();
-            int i = 0;
-            while (i < nonEmpty.size()) {
-                if (i + 1 < nonEmpty.size() &&
-                        nonEmpty.get(i).canMergeWith(nonEmpty.get(i + 1))) {
-                    Cell mergedCell = nonEmpty.get(i).mergeWith(nonEmpty.get(i + 1));
-                    merged.add(mergedCell);
-                    score += mergedCell.getValue();
-                    i += 2;
-                } else {
-                    merged.add(nonEmpty.get(i));
-                    i++;
-                }
-            }
-
-            // Pad with empty cells
-            while (merged.size() < size) {
-                merged.add(Cell.EMPTY);
-            }
-
-            // Put back into the column (reverse back to original order)
-            for (int row = size - 1; row >= 0; row--) {
-                grid[row][col] = merged.get(size - 1 - row);
-            }
-        }
-
-        boolean moved = !this.equals(previous);
-        if (moved) {
-            addRandomTile(); // Add new random tile after successful move
-        }
+        MoveStrategy downMoveStrategy = new DownMoveStrategy();
+        boolean moved = move(downMoveStrategy);
+        assert repOK();
         return moved;
     }
 
@@ -362,55 +384,9 @@ public class Board {
      * @return true if the board changed, false otherwise
      */
     public boolean moveLeft() {
-        Board previous = new Board(this);
-
-        // For each row, slide left
-        for (int row = 0; row < size; row++) {
-            // Create a list of cells from left to right
-            List<Cell> rowList = new ArrayList<>();
-            for (int col = 0; col < size; col++) {
-                rowList.add(grid[row][col]);
-            }
-
-            // Remove empty cells
-            List<Cell> nonEmpty = new ArrayList<>();
-            for (Cell cell : rowList) {
-                if (!cell.isEmpty()) {
-                    nonEmpty.add(cell);
-                }
-            }
-
-            // Merge adjacent equal cells
-            List<Cell> merged = new ArrayList<>();
-            int i = 0;
-            while (i < nonEmpty.size()) {
-                if (i + 1 < nonEmpty.size() &&
-                        nonEmpty.get(i).canMergeWith(nonEmpty.get(i + 1))) {
-                    Cell mergedCell = nonEmpty.get(i).mergeWith(nonEmpty.get(i + 1));
-                    merged.add(mergedCell);
-                    score += mergedCell.getValue();
-                    i += 2;
-                } else {
-                    merged.add(nonEmpty.get(i));
-                    i++;
-                }
-            }
-
-            // Pad with empty cells
-            while (merged.size() < size) {
-                merged.add(Cell.EMPTY);
-            }
-
-            // Put back into the row
-            for (int col = 0; col < size; col++) {
-                grid[row][col] = merged.get(col);
-            }
-        }
-
-        boolean moved = !this.equals(previous);
-        if (moved) {
-            addRandomTile(); // Add new random tile after successful move
-        }
+        MoveStrategy leftMoveStrategy = new LeftMoveStrategy();
+        boolean moved = move(leftMoveStrategy);
+        assert repOK();
         return moved;
     }
 
@@ -420,55 +396,9 @@ public class Board {
      * @return true if the board changed, false otherwise
      */
     public boolean moveRight() {
-        Board previous = new Board(this);
-
-        // For each row, slide right
-        for (int row = 0; row < size; row++) {
-            // Create a list of cells from right to left (reverse order)
-            List<Cell> rowList = new ArrayList<>();
-            for (int col = size - 1; col >= 0; col--) {
-                rowList.add(grid[row][col]);
-            }
-
-            // Remove empty cells
-            List<Cell> nonEmpty = new ArrayList<>();
-            for (Cell cell : rowList) {
-                if (!cell.isEmpty()) {
-                    nonEmpty.add(cell);
-                }
-            }
-
-            // Merge adjacent equal cells
-            List<Cell> merged = new ArrayList<>();
-            int i = 0;
-            while (i < nonEmpty.size()) {
-                if (i + 1 < nonEmpty.size() &&
-                        nonEmpty.get(i).canMergeWith(nonEmpty.get(i + 1))) {
-                    Cell mergedCell = nonEmpty.get(i).mergeWith(nonEmpty.get(i + 1));
-                    merged.add(mergedCell);
-                    score += mergedCell.getValue();
-                    i += 2;
-                } else {
-                    merged.add(nonEmpty.get(i));
-                    i++;
-                }
-            }
-
-            // Pad with empty cells
-            while (merged.size() < size) {
-                merged.add(Cell.EMPTY);
-            }
-
-            // Put back into the row (reverse back to original order)
-            for (int col = size - 1; col >= 0; col--) {
-                grid[row][col] = merged.get(size - 1 - col);
-            }
-        }
-
-        boolean moved = !this.equals(previous);
-        if (moved) {
-            addRandomTile(); // Add new random tile after successful move
-        }
+        MoveStrategy rightMoveStrategy = new RightMoveStrategy();
+        boolean moved = move(rightMoveStrategy);
+        assert repOK();
         return moved;
     }
 
@@ -484,17 +414,18 @@ public class Board {
     private boolean addRandomTile() {
         Set<Position> empty = getEmptyPositions();
         if (empty.isEmpty()) {
-            return false;
+            return false; 
         }
 
         // Choose random position
-        int randomIndex = (int) (Math.random() * empty.size());
+        int randomIndex = Math.floorMod(randomGeneration.nextRandom(), empty.size());
         Position pos = empty.stream().skip(randomIndex).findFirst().get();
 
         // 90% chance of 2, 10% chance of 4 (standard 2048 rules)
-        int value = Math.random() < 0.9 ? 2 : 4;
+        int value = Math.floorMod(randomGeneration.nextRandom(), 100) < 90 ? 2 : 4;
         grid[pos.row][pos.col] = new Cell(value);
 
+        assert repOK();
         return true;
     }
 
